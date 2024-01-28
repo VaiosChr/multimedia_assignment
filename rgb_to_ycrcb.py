@@ -1,65 +1,79 @@
 import numpy as np
-import cv2
 
 
-def subsamplingParameters(subsampling):
-    if subsampling == (4, 4, 4):
-        x_factor = 1
-        y_factor = 1
-    elif subsampling == (4, 2, 2):
-        x_factor = 2
-        y_factor = 1
-    elif subsampling == (4, 2, 0):
-        x_factor = 2
-        y_factor = 2
-    else:
-        raise ValueError("Subsampling must be 4:4:4, 4:2:2 or 4:2:0")
+# Subsampling function: subsamples the cr and cb channels and returns them
+def subsampleCrCb(cr, cb, subing):
+    if subing[2] == 4:
+        x, y = 1, 1
+    elif subing[2] == 2:
+        x, y = 2, 1
+    else: 
+        x, y = 2, 2
 
-    return x_factor, y_factor
-
-
-def subsamplingCrCb(cr, cb, subing):
-    x, y = subsamplingParameters(subing)
-
-    cr = cr[::x, ::y]
-    cb = cb[::x, ::y]
+    cr = cr[::y, ::x]
+    cb = cb[::y, ::x]
 
     return cr, cb
 
 
-def upsampleCrCb(cr, cb, subing):
-    x, y = subsamplingParameters(subing)
-
-    cr = np.repeat(np.repeat(cr, x, axis=0), y, axis=1)
-    cb = np.repeat(np.repeat(cb, x, axis=0), y, axis=1)
+# Upsampling function: upsamples the cr and cb channels and returns them
+def upsampleCrCb(cr, cb, subing):    
+    if subing[1] == 2:
+        cr = interpolateColumns(cr)
+        cb = interpolateColumns(cb)
+        if subing[2] == 0:
+            cr = interpolateRows(cr)
+            cb = interpolateRows(cb)
 
     return cr, cb
 
 
+# Converts RGB to YCrCb
 def convert2ycrcb(r, g, b, subing):
-    # Convert RGB to YCrCb
     y = 0.299 * r + 0.587 * g + 0.114 * b
-    cr = 0.5 - 0.168736 * r - 0.331264 * g + 0.5 * b
-    cb = 0.5 + 0.5 * r - 0.418688 * g - 0.081312 * b
+    cr = 0.5 * r - 0.4187 * g - 0.0813 * b
+    cb = -0.1687 * r - 0.3313 * g + 0.5 * b
 
-    # Subsampling
-    cr, cb = subsamplingCrCb(cr, cb, subing)
+    cr, cb = subsampleCrCb(cr, cb, subing)
 
     return y, cr, cb
 
 
+# Converts YCrCb to RGB
 def convert2rgb(y, cr, cb, subing):
     # Upsample the cr and cb channels
     cr, cb = upsampleCrCb(cr, cb, subing)
 
     # Perform inverse YCrCb to RGB conversion
-    r = y + 1.402 * (cr - 0.5)
-    g = y - 0.344136 * (cb - 0.5) - 0.714136 * (cr - 0.5)
-    b = y + 1.772 * (cb - 0.5)
+    r = y + 1.402 * cr
+    g = y - 0.344136 * cb - 0.714136 * cr
+    b = y + 1.772 * cb
 
-    # Clip values to be in the valid range [0, 1]
-    r = np.clip(r, 0, 1)
-    g = np.clip(g, 0, 1)
-    b = np.clip(b, 0, 1)
+    return r.astype('uint8'), g.astype('uint8'), b.astype('uint8')
+    
 
-    return r, g, b
+# Interpolation functions
+# Interpolates the columns of the input array
+def interpolateColumns(array):
+    rows, cols = array.shape
+
+    interpolated_array = np.zeros((rows, 2 * cols), dtype=array.dtype)
+    
+    for j in range(cols - 1):
+        interpolated_array[:, 2 * j] = array[:, j]
+        interpolated_array[:, 2 * j + 1] = (array[:, j] + array[:, j + 1]) / 2.0
+    
+    return interpolated_array
+
+
+# Interpolates the rows of the input array
+def interpolateRows(array):
+    rows, cols = array.shape
+    
+    interpolated_array = np.zeros((2 * rows, cols), dtype=array.dtype)
+    
+    for i in range(rows - 1):
+        interpolated_array[2 * i, :] = array[i, :]
+        interpolated_array[2 * i + 1, :] = (array[i, :] + array[i + 1, :]) / 2.0
+    
+    return interpolated_array
