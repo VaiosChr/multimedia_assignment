@@ -24,9 +24,13 @@ def iZigzagScan(zigzag):
     for i in range(rows + cols - 1):
         if i % 2 == 0:  # even diagonal
             for j in range(min(i, rows - 1), max(0, i - cols + 1) - 1, -1):
+                if len(zigzag) == 0:
+                    break
                 result[j][i - j] = zigzag.pop(0)
         else:  # odd diagonal
             for j in range(min(i, cols - 1), max(0, i - rows + 1) - 1, -1):
+                if len(zigzag) == 0:
+                    break
                 result[i - j][j] = zigzag.pop(0)
 
     return result
@@ -44,6 +48,7 @@ def runLength(qBlock, DCpred):
         else:
             runSymbols.append((counter, zigzag[i]))
             counter = 0
+    runSymbols.append((0, 0))
 
     return runSymbols
 
@@ -60,16 +65,17 @@ def iRunLength(runSymbols, DCpred):
     return iZigzagScan(zigzag)
 
 
-matrix = np.random.randint(0, 10, size=(8, 8))
+# matrix = np.random.randint(0, 10, size=(8, 8))
 
-for i in range(len(matrix)):
-    for j in range(len(matrix[0])):
-        if matrix[i][j] < 5:
-            matrix[i][j] = 0
+# for i in range(len(matrix)):
+#     for j in range(len(matrix[0])):
+#         if matrix[i][j] < 5:
+#             matrix[i][j] = 0
 
-print(matrix)
+# print(matrix)
 
-print(runLength(matrix, -5))
-print(iRunLength(runLength(matrix, -5), -5))
+# print(runLength(matrix, -5))
+
+# print(iRunLength(runLength(matrix, -5), -5))
 
 
