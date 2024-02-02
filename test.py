@@ -1,10 +1,10 @@
 from PIL import Image
 import numpy as np
-from rgb_to_ycrcb import convert2ycrcb, convert2rgb
-from dct import blockDCT
-from zig_zag import runLength
-from quantization import quantizeJPEG
-from huffman import huffEnc, huffDec
+from transformations.rgb_to_ycrcb import convert2ycrcb, convert2rgb
+from transformations.dct import blockDCT
+from transformations.zig_zag import runLength
+from transformations.quantization import quantizeJPEG
+from transformations.huffman import huffEnc, huffDec
 
 quantTable = np.array([[16, 11, 10, 16, 24, 40, 51, 61],
                           [12, 12, 14, 19, 26, 58, 60, 55],

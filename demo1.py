@@ -1,8 +1,8 @@
-from rgb_to_ycrcb import convert2ycrcb, convert2rgb
+from transformations.rgb_to_ycrcb import convert2ycrcb, convert2rgb
 from PIL import Image
 import numpy as np
-from dct import blockDCT, iBlockDCT
-from quantization import quantizeJPEG, dequantizeJPEG
+from transformations.dct import blockDCT, iBlockDCT
+from transformations.quantization import quantizeJPEG, dequantizeJPEG
 
 ######### QUESTION 1 #########
 

@@ -1,4 +1,4 @@
-from huffman_tables import dc_luminance, dc_chrominance, ac_luminance, ac_chrominance
+from tables.huffman_tables import dc_luminance, dc_chrominance, ac_luminance, ac_chrominance
 import math
 
 def findCategory(DIFF):
@@ -117,12 +117,12 @@ def huffDec(huffStream, isLuminance=True):
 
   return decodedSymbols
 
-# Example RLE data for the given block
-runSymbols = [(0, -4), (1, 1), (2, 5), (0, 1), (0, 0), (0, 0), (0, 0), (0, 0), (3, 2), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (1, 6)]
+# # Example RLE data for the given block
+# runSymbols = [(0, -4), (1, 1), (2, 5), (0, 1), (0, 0), (0, 0), (0, 0), (0, 0), (3, 2), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (1, 6)]
 
-encoded_block = huffEnc(runSymbols)
+# encoded_block = huffEnc(runSymbols)
 
-print("Encoded Block:", encoded_block)
+# print("Encoded Block:", encoded_block)
   
-decoded_block = huffDec(encoded_block)
-print("Decoded Block:", decoded_block)
+# decoded_block = huffDec(encoded_block)
+# print("Decoded Block:", decoded_block)
