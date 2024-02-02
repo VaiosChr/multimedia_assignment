@@ -22,10 +22,10 @@ image = Image.open("images/baboon.png")
 
 # Convert the image data to numpy arrays
 r, g, b = np.array(image.split())
-subing = (4, 4, 4)
+subimg = (4, 4, 4)
 
 # Convert to YCrCb with 4:2:2 subsampling
-y, cr, cb = convert2ycrcb(r, g, b, subing)
+y, cr, cb = convert2ycrcb(r, g, b, subimg)
 
 dct_y = blockDCT(y[0:8, 0:8])
 print(dct_y)
@@ -39,7 +39,7 @@ print(runSymbols)
 
 
 
-# r_new, g_new, b_new = convert2rgb(y, cr, cb, subing)
+# r_new, g_new, b_new = convert2rgb(y, cr, cb, subimg)
 
 # r_img = Image.fromarray(r_new, 'L')
 # g_img = Image.fromarray(g_new, 'L')

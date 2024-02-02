@@ -12,16 +12,16 @@ from quantization import quantizeJPEG, dequantizeJPEG
 # img2 = Image.open("images/lena_color_512.png")
 # r2, g2, b2 = np.array(img2.split())
 
-# subing1 = (4, 2, 2)
-# subing2 = (4, 4, 4)
+# subimg1 = (4, 2, 2)
+# subimg2 = (4, 4, 4)
 
 # # Convert to YCrCb
-# y1, cr1, cb1 = convert2ycrcb(r1, g1, b1, subing1)
-# y2, cr2, cb2 = convert2ycrcb(r2, g2, b2, subing2)
+# y1, cr1, cb1 = convert2ycrcb(r1, g1, b1, subimg1)
+# y2, cr2, cb2 = convert2ycrcb(r2, g2, b2, subimg2)
 
 # # Convert back to RGB
-# r1_new, g1_new, b1_new = convert2rgb(y1, cr1, cb1, subing1)
-# r2_new, g2_new, b2_new = convert2rgb(y2, cr2, cb2, subing2)
+# r1_new, g1_new, b1_new = convert2rgb(y1, cr1, cb1, subimg1)
+# r2_new, g2_new, b2_new = convert2rgb(y2, cr2, cb2, subimg2)
 
 # r1_new_img = Image.fromarray(r1_new, 'L')
 # g1_new_img = Image.fromarray(g1_new, 'L')
@@ -57,12 +57,12 @@ r1, g1, b1 = np.array(img1.split())
 img2 = Image.open("images/lena_color_512.png")
 r2, g2, b2 = np.array(img2.split())
 
-subing1 = (4, 2, 2)
-subing2 = (4, 4, 4)
+subimg1 = (4, 2, 2)
+subimg2 = (4, 4, 4)
 
 # Convert to YCrCb
-y1, cr1, cb1 = convert2ycrcb(r1, g1, b1, subing1)
-y2, cr2, cb2 = convert2ycrcb(r2, g2, b2, subing2)
+y1, cr1, cb1 = convert2ycrcb(r1, g1, b1, subimg1)
+y2, cr2, cb2 = convert2ycrcb(r2, g2, b2, subimg2)
 
 y1_dct = np.zeros(y1.shape)
 cr1_dct = np.zeros(cr1.shape)
@@ -131,8 +131,8 @@ for i in range(0, cr2.shape[0], 8):
 
 
 # Convert back to RGB
-r1_new, g1_new, b1_new = convert2rgb(y1_dct, cr1_dct, cb1_dct, subing1)
-r2_new, g2_new, b2_new = convert2rgb(y2_dct, cr2_dct, cb2_dct, subing2)
+r1_new, g1_new, b1_new = convert2rgb(y1_dct, cr1_dct, cb1_dct, subimg1)
+r2_new, g2_new, b2_new = convert2rgb(y2_dct, cr2_dct, cb2_dct, subimg2)
 
 r1_new_img = Image.fromarray(r1_new, 'L')
 g1_new_img = Image.fromarray(g1_new, 'L')
