@@ -8,71 +8,12 @@ def findCategory(DIFF):
   return (int)(math.log2(abs(DIFF))+1)
 
 
-
-# def huffEnc(runSymbols, isLuminance=True):
-#   huffStream = ""
-
-#   if isLuminance:
-#     huffStream += dc_luminance[abs(runSymbols[0][1])]
-
-#     for i in range(1, len(runSymbols)):
-#       huffStream += ac_luminance[runSymbols[i][0], abs(runSymbols[i][1])]
-#   else: 
-#     huffStream += dc_chrominance[abs(runSymbols[0][1])]
-
-#     for i in range(1, len(runSymbols)):
-#       huffStream += ac_chrominance[runSymbols[i][0], abs(runSymbols[i][1])]
+def findDCBase(category):
+  if category == 0:
+    return 0
   
-#   return huffStream
+  return (int)(math.pow(2, category-1))
 
-
-# def huffDec(huffStream, isLuminance=True):
-#     index = 0
-#     endIndex = 1
-#     decodedSymbols = []
-
-#     dc_luminance_rev = {v: k for k, v in dc_luminance.items()}
-#     dc_chrominance_rev = {v: k for k, v in dc_chrominance.items()}
-#     ac_luminance_rev = {v: k for k, v in ac_luminance.items()}
-#     ac_chrominance_rev = {v: k for k, v in ac_chrominance.items()}
-#     print(ac_luminance_rev["1010"])
-
-#     while index < len(huffStream):
-#       try:
-#         if isLuminance:
-#           symbol = dc_luminance_rev[huffStream[index:endIndex]]
-#         else:
-#           symbol = dc_chrominance_rev[huffStream[index:endIndex]]
-#       except:
-#         endIndex += 1
-#         continue
-#       decodedSymbols.append((0, symbol))
-#       index = endIndex
-#       endIndex += 1
-#       break    
-
-#     while index < len(huffStream):
-#       try:
-#         if isLuminance:
-#           run, size = ac_luminance_rev[huffStream[index:endIndex]]
-#         else:
-#           run, size = ac_chrominance_rev[huffStream[index:endIndex]]
-#       except:
-#         endIndex += 1
-#         continue
-#       decodedSymbols.append((run, size))
-
-#       index = endIndex
-#       endIndex += 1
-
-#     return decodedSymbols
-
-# # Example usage:
-# runSymbols = [(0, 5), (1, 3), (2, 5), (0, 1), (0, 0), (0, 0), (0, 0), (0, 0), (3, 2), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (1, 6)]
-# encodedStream = huffEnc(runSymbols)
-# # print(encodedStream)
-# decodedSymbols = huffDec(encodedStream)
-# print(decodedSymbols)
 
 def huffEnc(runSymbols, isLuminance=True):
   diff = runSymbols[0][1]
@@ -105,7 +46,7 @@ def encodeDC(DIFF, isLuminance):
   else:
     diff_binary = bin(abs(DIFF))[2:]
 
-  return code
+  return code + diff_binary
 
 
 def encodeAC(coefficients, isLuminance):
@@ -140,16 +81,25 @@ def huffDec(huffStream, isLuminance=True):
   while index < len(huffStream):
     try:
       if isLuminance:
-        symbol = dc_luminance_rev[huffStream[index:endIndex]]
+        category = dc_luminance_rev[huffStream[index:endIndex]]
       else:
-        symbol = dc_chrominance_rev[huffStream[index:endIndex]]
+        category = dc_chrominance_rev[huffStream[index:endIndex]]
     except:
       endIndex += 1
       continue
-    decodedSymbols.append((0, symbol))
-    index = endIndex
-    endIndex += 1
-    break    
+    
+    base = findDCBase(category)
+    bit = huffStream[endIndex+1:endIndex+category]
+    if huffStream[endIndex] == '0':
+      bit = bit.replace('0', '2').replace('1', '0').replace('2', '1')
+      diff = -1 * (base + int(bit, 2))
+    else:
+      diff = base + int(bit, 2)
+
+    decodedSymbols.append((0, diff))
+    endIndex += category + 1
+    index = endIndex - 1
+    break
 
   while index < len(huffStream):
     try:
@@ -168,7 +118,7 @@ def huffDec(huffStream, isLuminance=True):
   return decodedSymbols
 
 # Example RLE data for the given block
-runSymbols = [(0, -42), (1, 3), (2, 5), (0, 1), (0, 0), (0, 0), (0, 0), (0, 0), (3, 2), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (1, 6)]
+runSymbols = [(0, -4), (1, 1), (2, 5), (0, 1), (0, 0), (0, 0), (0, 0), (0, 0), (3, 2), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (1, 6)]
 
 encoded_block = huffEnc(runSymbols)
 
