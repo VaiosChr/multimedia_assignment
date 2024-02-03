@@ -26,7 +26,6 @@ class JPEGblockItem:
         self.imgRec = imgRec            # Reconstructed image
         
 
-
 def JPEGencode(img, subimg, qScale):
     JPEGenc = (JPEGfirst(),)
     
@@ -46,7 +45,6 @@ def JPEGencode(img, subimg, qScale):
             quant_blk = quantizeJPEG(dct_blk, JPEGenc[0].qTableL, qScale)
             # Run-length encode the block
             runSymbols = runLength(quant_blk, DCpred)
-            print(runSymbols)
             # Huffman encode the block
             huffStream = huffEnc(runSymbols)
             # Store the huffman stream
@@ -54,7 +52,8 @@ def JPEGencode(img, subimg, qScale):
                 blkType = "Y",
                 indHor = i,
                 indVer = j,
-                huffStream = huffStream
+                huffStream = huffStream,
+                imgRec = None
             )
             # Store the block item
             JPEGenc += (blkItem,)
@@ -80,7 +79,8 @@ def JPEGencode(img, subimg, qScale):
                 blkType = "Cr",
                 indHor = i,
                 indVer = j,
-                huffStream = huffStream
+                huffStream = huffStream,
+                imgRec = None
             )
             # Store the block item
             JPEGenc += (blkItem,)
@@ -95,7 +95,7 @@ def JPEGencode(img, subimg, qScale):
             # Perform DCT
             dct_blk = blockDCT(block)
             # Quantize the block
-            quant_blk = quantizeJPEG(dct_blk, JPEGenc.qTableC, qScale)
+            quant_blk = quantizeJPEG(dct_blk, JPEGenc[0].qTableC, qScale)
             # Run-length encode the block
             runSymbols = runLength(quant_blk, DCpred)
             # Huffman encode the block
@@ -105,7 +105,8 @@ def JPEGencode(img, subimg, qScale):
                 blkType = "Cb",
                 indHor = i,
                 indVer = j,
-                huffStream = huffStream
+                huffStream = huffStream,
+                imgRec = None
             )
             # Store the block item
             JPEGenc += (blkItem,)

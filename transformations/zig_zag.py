@@ -48,6 +48,9 @@ def runLength(qBlock, DCpred):
         else:
             runSymbols.append((counter, zigzag[i]))
             counter = 0
+        if counter == 15:
+            runSymbols.append((15, 0))
+            counter = 0
     runSymbols.append((0, 0))
 
     return runSymbols

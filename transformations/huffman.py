@@ -53,11 +53,21 @@ def encodeAC(coefficients, isLuminance):
   ac_codes = ""
 
   for coef in coefficients:
-    if isLuminance:
-      ac_code = ac_luminance[coef]
+    category = findCategory(coef[1])
+    ac_code = ac_luminance[(coef[0], category)] if isLuminance else ac_chrominance[(coef[0], category)]
+    if coef[1] < 0:
+      coef_binary = bin(abs(coef[1]-1))[2:]
+      coef_binary = coef_binary.replace('0', '2').replace('1', '0').replace('2', '1')
+      # add 1 to diff_binary
+      for i in range(len(coef_binary)-1, -1, -1):
+        if coef_binary[i] == '0':
+          coef_binary = coef_binary[:i] + '1' + coef_binary[i+1:]
+          break
+        else:
+          coef_binary = coef_binary[:i] + '0' + coef_binary[i+1:]
     else:
-      ac_code = ac_chrominance[coef]
-    ac_codes += ac_code
+      coef_binary = bin(abs(coef[1]))[2:]
+    ac_codes += ac_code + coef_binary
 
   # Add end-of-block marker
   if isLuminance:
