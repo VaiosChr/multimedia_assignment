@@ -1,8 +1,8 @@
-from transformations.huffman import huffEnc
-from transformations.quantization import quantizeJPEG
-from transformations.dct import blockDCT
-from transformations.zig_zag import runLength
-from transformations.rgb_to_ycrcb import convert2ycrcb
+from huffman import huffEnc, huffDec
+from transformations.quantization import quantizeJPEG, dequantizeJPEG
+from transformations.dct import blockDCT, iBlockDCT
+from transformations.zig_zag import runLength, iRunLength
+from transformations.rgb_to_ycrcb import convert2ycrcb, convert2rgb
 from PIL import Image
 from tables.huffman_tables import *
 from tables.quantization_tables import *
@@ -18,12 +18,11 @@ class JPEGfirst:
 
 
 class JPEGblockItem:
-    def __init__(self, blkType, indHor, indVer, huffStream, imgRec):
+    def __init__(self, blkType, indHor, indVer, huffStream):
         self.blkType = blkType          # Type of block (Y, Cb, Cr)
         self.indHor = indHor            # Horizontal index of the block
         self.indVer = indVer            # Vertical index of the block
         self.huffStream = huffStream    # Huffman stream
-        self.imgRec = imgRec            # Reconstructed image
         
 
 def JPEGencode(img, subimg, qScale):
@@ -52,8 +51,7 @@ def JPEGencode(img, subimg, qScale):
                 blkType = "Y",
                 indHor = i,
                 indVer = j,
-                huffStream = huffStream,
-                imgRec = None
+                huffStream = huffStream
             )
             # Store the block item
             JPEGenc += (blkItem,)
@@ -79,8 +77,7 @@ def JPEGencode(img, subimg, qScale):
                 blkType = "Cr",
                 indHor = i,
                 indVer = j,
-                huffStream = huffStream,
-                imgRec = None
+                huffStream = huffStream
             )
             # Store the block item
             JPEGenc += (blkItem,)
@@ -105,8 +102,7 @@ def JPEGencode(img, subimg, qScale):
                 blkType = "Cb",
                 indHor = i,
                 indVer = j,
-                huffStream = huffStream,
-                imgRec = None
+                huffStream = huffStream
             )
             # Store the block item
             JPEGenc += (blkItem,)
@@ -115,7 +111,101 @@ def JPEGencode(img, subimg, qScale):
     return JPEGenc
 
 
+def JPEGdecode(JPEGenc):
+    y = [[]]
+    cr = [[]]
+    cb = [[]]
+    y_JPEGenc = []
+    cr_JPEGenc = []
+    cb_JPEGenc = []
+
+
+    # Split the JPEGenc into Y, Cr, and Cb
+    for i in range(1, len(JPEGenc)):
+        if JPEGenc[i].blkType == "Y":
+            y_JPEGenc.append(JPEGenc[i])
+        if JPEGenc[i].blkType == "Cr":
+            cr_JPEGenc.append(JPEGenc[i])
+        if JPEGenc[i].blkType == "Cb":
+            cb_JPEGenc.append(JPEGenc[i])
+
+    # Luminance block decoding
+    DCpred = 0
+    runSymbols = huffDec(y_JPEGenc[0].huffStream)
+    print(runSymbols)
+    for i in range(len(y_JPEGenc)):
+        if i > 0:
+            DCpred = runSymbols[0][1]
+        # Huffman decode the block
+        runSymbols = huffDec(y_JPEGenc[i].huffStream)
+        quant_blk = iRunLength(runSymbols, DCpred)
+        # Dequantize the block
+        quant_blk = dequantizeJPEG(quant_blk, y_JPEGenc[0].qTableL, qScale)
+        # Inverse DCT
+        block = iBlockDCT(quant_blk)
+        y[y_JPEGenc[i].indHor:y_JPEGenc[i].indHor+8, y_JPEGenc[i].indVer:y_JPEGenc[i].indVer+8] = block
+
+
+            
+    # Chrominance block decoding
+    ### Cr
+    DCpred = 0
+    runSymbols = huffDec(cr_JPEGenc[0].huffStream)
+    for i in range(len(cr_JPEGenc)):
+        if i > 0:
+            DCpred = runSymbols[0][1]
+        # Huffman decode the block
+        runSymbols = huffDec(cr_JPEGenc[i].huffStream)
+        quant_blk = iRunLength(runSymbols, DCpred)
+        # Dequantize the block
+        quant_blk = dequantizeJPEG(quant_blk, cr_JPEGenc[0].qTableC, qScale)
+        # Inverse DCT
+        block = iBlockDCT(quant_blk)
+        # Store the reconstructed block
+        cr[cr_JPEGenc[i].indHor:cr_JPEGenc[i].indHor+8, cr_JPEGenc[i].indVer:cr_JPEGenc[i].indVer+8] = block
+
+    ### Cb
+    DCpred = 0
+    runSymbols = huffDec(cb_JPEGenc[0].huffStream)
+    for i in range(len(cb_JPEGenc)):
+        if i > 0:
+            DCpred = runSymbols[0][1]
+        # Huffman decode the block
+        runSymbols = huffDec(cb_JPEGenc[i].huffStream)
+        quant_blk = iRunLength(runSymbols, DCpred)
+        # Dequantize the block
+        quant_blk = dequantizeJPEG(quant_blk, cb_JPEGenc[0].qTableC, qScale)
+        # Inverse DCT
+        block = iBlockDCT(quant_blk)
+        # Store the reconstructed block
+        cb[cb_JPEGenc[i].indHor:cb_JPEGenc[i].indHor+8, cb_JPEGenc[i].indVer:cb_JPEGenc[i].indVer+8] = block
+            
+
+    # Calculate subimg
+    return mergeRGB(y, cr, cb)
+
+def mergeRGB(y, cr, cb):
+    second = y.shape[0]//cr.shape[0]
+    third = y.shape[1]//cr.shape[1]
+    subimg = [4, 4, 4]
+    if second == 2:
+        subimg = [4, 2, 2]
+    if third == 2:
+        subimg = [4, 2, 0]
+
+    r, g, b = convert2rgb(y, cr, cb, subimg)
+
+    r_img = Image.fromarray(r, 'L')
+    g_img = Image.fromarray(g, 'L')
+    b_img = Image.fromarray(b, 'L')
+
+    # Create a new image from the RGB channels
+    return Image.merge("RGB", (r_img, g_img, b_img))
+
+
 img = Image.open('images/baboon.png')
 subimg = [4, 2, 2]
 qScale = 1
 JPEGenc = JPEGencode(img, subimg, qScale)
+img = JPEGdecode(JPEGenc)
+img.show()

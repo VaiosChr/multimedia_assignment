@@ -4,7 +4,7 @@ from transformations.rgb_to_ycrcb import convert2ycrcb, convert2rgb
 from transformations.dct import blockDCT
 from transformations.zig_zag import runLength
 from transformations.quantization import quantizeJPEG
-from transformations.huffman import huffEnc, huffDec
+from huffman import huffEnc, huffDec
 
 quantTable = np.array([[16, 11, 10, 16, 24, 40, 51, 61],
                           [12, 12, 14, 19, 26, 58, 60, 55],
@@ -22,7 +22,7 @@ image = Image.open("images/baboon.png")
 
 # Convert the image data to numpy arrays
 r, g, b = np.array(image.split())
-subimg = (4, 4, 4)
+subimg = [4, 4, 4]
 
 # Convert to YCrCb with 4:2:2 subsampling
 y, cr, cb = convert2ycrcb(r, g, b, subimg)

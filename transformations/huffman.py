@@ -1,5 +1,11 @@
-from tables.huffman_tables import dc_luminance, dc_chrominance, ac_luminance, ac_chrominance
 import math
+from tables.huffman_tables import *
+
+
+dc_luminance_rev = {v: k for k, v in dc_luminance.items()}
+dc_chrominance_rev = {v: k for k, v in dc_chrominance.items()}
+ac_luminance_rev = {v: k for k, v in ac_luminance.items()}
+ac_chrominance_rev = {v: k for k, v in ac_chrominance.items()}
 
 def findCategory(DIFF):
   if DIFF == 0:
@@ -8,7 +14,7 @@ def findCategory(DIFF):
   return (int)(math.log2(abs(DIFF))+1)
 
 
-def findDCBase(category):
+def findBase(category):
   if category == 0:
     return 0
   
@@ -32,11 +38,11 @@ def encodeDC(DIFF, isLuminance):
   else:
     code = dc_chrominance[category]
   
-  # binary of diff
+  # Binary of diff
   if DIFF < 0:
     diff_binary = bin(abs(DIFF-1))[2:]
     diff_binary = diff_binary.replace('0', '2').replace('1', '0').replace('2', '1')
-    # add 1 to diff_binary
+    # Add 1 to diff_binary
     for i in range(len(diff_binary)-1, -1, -1):
       if diff_binary[i] == '0':
         diff_binary = diff_binary[:i] + '1' + diff_binary[i+1:]
@@ -44,8 +50,10 @@ def encodeDC(DIFF, isLuminance):
       else:
         diff_binary = diff_binary[:i] + '0' + diff_binary[i+1:]
   else:
-    diff_binary = bin(abs(DIFF))[2:]
+    diff_binary = bin(DIFF)[2:]
 
+  diff_binary = diff_binary[len(diff_binary)-category:]
+  print(code, "+", diff_binary)
   return code + diff_binary
 
 
@@ -58,81 +66,85 @@ def encodeAC(coefficients, isLuminance):
     if coef[1] < 0:
       coef_binary = bin(abs(coef[1]-1))[2:]
       coef_binary = coef_binary.replace('0', '2').replace('1', '0').replace('2', '1')
-      # add 1 to diff_binary
+      # Add 1 to diff_binary
       for i in range(len(coef_binary)-1, -1, -1):
         if coef_binary[i] == '0':
           coef_binary = coef_binary[:i] + '1' + coef_binary[i+1:]
           break
-        else:
-          coef_binary = coef_binary[:i] + '0' + coef_binary[i+1:]
     else:
-      coef_binary = bin(abs(coef[1]))[2:]
-    ac_codes += ac_code + coef_binary
+      coef_binary = '0' + bin(abs(coef[1]))[2:]
+    ac_codes += ac_code + coef_binary[len(coef_binary)-category:]
 
   # Add end-of-block marker
-  if isLuminance:
-    ac_codes += ac_luminance[(0, 0)]
-  else:
-    ac_codes += ac_chrominance[(0, 0)]
+  ac_codes += ac_luminance[(0, 0)] if isLuminance else ac_chrominance[(0, 0)]
 
   return ac_codes
 
 
-def huffDec(huffStream, isLuminance=True):
-  index = 0
+def decodeDC(huffStream, isLuminance):
   endIndex = 1
-  decodedSymbols = []
-
-  dc_luminance_rev = {v: k for k, v in dc_luminance.items()}
-  dc_chrominance_rev = {v: k for k, v in dc_chrominance.items()}
-  ac_luminance_rev = {v: k for k, v in ac_luminance.items()}
-  ac_chrominance_rev = {v: k for k, v in ac_chrominance.items()}
-
-  while index < len(huffStream):
+  
+  while endIndex < len(huffStream):
     try:
-      if isLuminance:
-        category = dc_luminance_rev[huffStream[index:endIndex]]
-      else:
-        category = dc_chrominance_rev[huffStream[index:endIndex]]
+      category = dc_luminance_rev[huffStream[:endIndex]] if isLuminance else dc_chrominance_rev[huffStream[:endIndex]]
     except:
       endIndex += 1
       continue
     
-    base = findDCBase(category)
-    bit = huffStream[endIndex+1:endIndex+category]
-    if huffStream[endIndex] == '0':
+    if category == 0:
+      return 0, endIndex + 1
+    
+    bit = huffStream[endIndex:endIndex+category]
+    if bit[0] == '0':
       bit = bit.replace('0', '2').replace('1', '0').replace('2', '1')
-      diff = -1 * (base + int(bit, 2))
+      diff = -(int(bit, 2))
     else:
-      diff = base + int(bit, 2)
+      diff = int(bit, 2)
+    return diff, endIndex + category
 
-    decodedSymbols.append((0, diff))
-    endIndex += category + 1
-    index = endIndex - 1
-    break
 
-  while index < len(huffStream):
+def decodeAC(huffStream, index, isLuminance):
+  endIndex = index + 1
+  symbols = []
+
+  while endIndex < len(huffStream):
     try:
-      if isLuminance:
-        run, size = ac_luminance_rev[huffStream[index:endIndex]]
-      else:
-        run, size = ac_chrominance_rev[huffStream[index:endIndex]]
+      run, category = ac_luminance_rev[huffStream[index:endIndex]] if isLuminance else ac_chrominance_rev[huffStream[index:endIndex]]
     except:
       endIndex += 1
       continue
-    decodedSymbols.append((run, size))
 
-    index = endIndex
-    endIndex += 1
+    base = findBase(category)
+    bit = huffStream[endIndex:endIndex+category]
+    if bit[0] == '0':
+      bit = bit.replace('0', '2').replace('1', '0').replace('2', '1')
+      coef = -int(bit, 2)
+    else:
+      coef = int(bit, 2)
+    
+    symbols.append((run, coef))
+    endIndex += category + 1
+    index = endIndex - 1
+
+  return symbols 
+
+def huffDec(huffStream, isLuminance=True):
+  diff, index = decodeDC(huffStream, isLuminance)
+  symbols = decodeAC(huffStream, index, isLuminance)
+
+  decodedSymbols = [(0, diff)]
+  decodedSymbols.append(symbols)
 
   return decodedSymbols
 
-# # Example RLE data for the given block
-# runSymbols = [(0, -4), (1, 1), (2, 5), (0, 1), (0, 0), (0, 0), (0, 0), (0, 0), (3, 2), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (1, 6)]
+# Example RLE data for the given block
+runSymbols = [(0, -1), (1, 1), (2, 5), (0, 1), (3, 2), (1, 6)]
 
-# encoded_block = huffEnc(runSymbols)
+encoded_block = huffEnc(runSymbols)
 
-# print("Encoded Block:", encoded_block)
+print("Encoded Block:", encoded_block)
   
-# decoded_block = huffDec(encoded_block)
-# print("Decoded Block:", decoded_block)
+decoded_block = huffDec(encoded_block)
+print("Decoded Block:", decoded_block)
+
+#@TODO: EOB code remains
