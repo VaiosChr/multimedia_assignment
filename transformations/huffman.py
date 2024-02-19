@@ -53,7 +53,6 @@ def encodeDC(DIFF, isLuminance):
     diff_binary = bin(DIFF)[2:]
 
   diff_binary = diff_binary[len(diff_binary)-category:]
-  print(code, "+", diff_binary)
   return code + diff_binary
 
 
@@ -116,6 +115,9 @@ def decodeAC(huffStream, index, isLuminance):
 
     base = findBase(category)
     bit = huffStream[endIndex:endIndex+category]
+    
+    if len(bit) == 0:
+      break
     if bit[0] == '0':
       bit = bit.replace('0', '2').replace('1', '0').replace('2', '1')
       coef = -int(bit, 2)
@@ -133,18 +135,19 @@ def huffDec(huffStream, isLuminance=True):
   symbols = decodeAC(huffStream, index, isLuminance)
 
   decodedSymbols = [(0, diff)]
-  decodedSymbols.append(symbols)
+  for symbol in symbols:
+    decodedSymbols.append(symbol) 
 
   return decodedSymbols
 
 # Example RLE data for the given block
-runSymbols = [(0, -1), (1, 1), (2, 5), (0, 1), (3, 2), (1, 6)]
+# runSymbols = [(0, 40), (0, 7), (0, -2), (1, 3), (0, 7), (0, 2), (0, 6), (0, -2), (0, 1), (0, 2), (0, 2), (0, -4), (0, 5), (0, 1), (0, 1), (0, 2), (0, 1), (7, 2), (0, 1), (0, 1), (1, 1), (0, 1), (11, 1), (1, 1), (8, 1)]
 
-encoded_block = huffEnc(runSymbols)
+# encoded_block = huffEnc(runSymbols)
 
-print("Encoded Block:", encoded_block)
+# print("Encoded Block:", encoded_block)
   
-decoded_block = huffDec(encoded_block)
-print("Decoded Block:", decoded_block)
+# decoded_block = huffDec(encoded_block)
+# print("Decoded Block:", decoded_block)
 
 #@TODO: EOB code remains

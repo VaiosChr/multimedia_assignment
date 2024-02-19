@@ -40,8 +40,9 @@ def runLength(qBlock, DCpred):
     zigzag = zigzagScan(qBlock)
     runSymbols = []
 
-    counter = 0
     runSymbols.append((0, zigzag[0] - DCpred))
+
+    counter = 0
     for i in range(1, len(zigzag)):
         if zigzag[i] == 0:
             counter += 1
@@ -81,4 +82,15 @@ def iRunLength(runSymbols, DCpred):
 
 # print(iRunLength(runLength(matrix, -5), -5))
 
+# runSymbols = [(0, 40), (0, 7), (0, -2), (1, 3), (0, 7), (0, 2), (0, 6), (0, -2), (0, 1), (0, 2), (0, 2), (0, -4), (0, 5), (0, 1), (0, 1), (0, 2), (0, 1), (7, 2), (0, 1), (0, 1), (1, 1), (0, 1), (11, 1), (1, 1), (8, 1)]
+# print(iRunLength(runSymbols, 40))
+# qBlock = [[80,  7,  7,  2,  1,  1,  1,  0],
+#           [-2,  3,  6,  5,  2,  1,  1,  1],
+#           [ 0, -2, -4,  1,  2,  1,  0,  0],
+#           [ 1,  2,  0,  0,  0,  0,  1,  1],
+#           [ 2,  0,  0,  0,  0,  0,  0,  0],
+#           [ 0,  0,  0,  0,  0,  0,  0,  0],
+#           [ 0,  0,  0,  0,  0,  0,  0,  0],
+#           [ 0,  0,  0,  0,  0,  0,  0,  0]]
 
+# print(runLength(qBlock, 40))
