@@ -55,7 +55,7 @@ def JPEGencode(img, subimg, qScale):
             )
             # Store the block item
             JPEGenc += (blkItem,)
-            DCpred = quant_blk[0, 0]
+            DCpred = runSymbols[0][1]
             
     # Chrominance block encoding
     ### Cr
@@ -81,7 +81,7 @@ def JPEGencode(img, subimg, qScale):
             )
             # Store the block item
             JPEGenc += (blkItem,)
-            DCpred = quant_blk[0, 0]
+            DCpred = runSymbols[0][1]
     
     ### Cb
     DCpred = 0
@@ -106,15 +106,12 @@ def JPEGencode(img, subimg, qScale):
             )
             # Store the block item
             JPEGenc += (blkItem,)
-            DCpred = quant_blk[0, 0]
+            DCpred = runSymbols[0][1]
                         
     return JPEGenc
 
 
 def JPEGdecode(JPEGenc):
-    y = np.empty((512, 512))
-    cr = np.empty((512, 256))
-    cb = np.empty((512, 256))
     y_JPEGenc = []
     cr_JPEGenc = []
     cb_JPEGenc = []
@@ -128,6 +125,10 @@ def JPEGdecode(JPEGenc):
             cr_JPEGenc.append(JPEGenc[i])
         elif JPEGenc[i].blkType == "Cb":
             cb_JPEGenc.append(JPEGenc[i])
+    
+    y = np.empty((y_JPEGenc[-1].indHor+8, y_JPEGenc[-1].indVer+8))
+    cr = np.empty((cr_JPEGenc[-1].indHor+8, cr_JPEGenc[-1].indVer+8))
+    cb = np.empty((cb_JPEGenc[-1].indHor+8, cb_JPEGenc[-1].indVer+8))
 
     # Luminance block decoding
     DCpred = 0
@@ -177,27 +178,24 @@ def JPEGdecode(JPEGenc):
         # Store the reconstructed block
         cb[cb_JPEGenc[i].indHor:cb_JPEGenc[i].indHor+8, cb_JPEGenc[i].indVer:cb_JPEGenc[i].indVer+8] = block
             
-    # Calculate subimg
     return mergeRGB(y, cr, cb)
 
 def mergeRGB(y, cr, cb):
-    second = y.shape[0]//cr.shape[0]
-    third = y.shape[1]//cr.shape[1]
+    # Calculate sumsampling parameters
     subimg = [4, 4, 4]
-    if second == 2:
+    if y.shape[1]//cr.shape[1] == 2:
         subimg = [4, 2, 2]
-    if third == 2:
+    if y.shape[0]//cr.shape[0] == 2:
         subimg = [4, 2, 0]
     
-    subimg = [4, 2, 2]
-
+    # Convert YCrCb to RGB
     r, g, b = convert2rgb(y, cr, cb, subimg)
 
+    # Create the image
     r_img = Image.fromarray(r, 'L')
     g_img = Image.fromarray(g, 'L')
     b_img = Image.fromarray(b, 'L')
 
-    # Create a new image from the RGB channels
     return Image.merge("RGB", (r_img, g_img, b_img))
 
 
@@ -208,4 +206,6 @@ JPEGenc = JPEGencode(img, subimg, qScale)
 img = JPEGdecode(JPEGenc)
 img.show()
 
-img.save('images/baboon_jpeg.png')
+# img.save('images/baboon_jpeg.png')
+
+

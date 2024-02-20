@@ -52,7 +52,6 @@ def runLength(qBlock, DCpred):
         if counter == 15:
             runSymbols.append((15, 0))
             counter = 0
-    runSymbols.append((0, 0))
 
     return runSymbols
 
@@ -82,7 +81,7 @@ def iRunLength(runSymbols, DCpred):
 
 # print(iRunLength(runLength(matrix, -5), -5))
 
-# runSymbols = [(0, 40), (0, 7), (0, -2), (1, 3), (0, 7), (0, 2), (0, 6), (0, -2), (0, 1), (0, 2), (0, 2), (0, -4), (0, 5), (0, 1), (0, 1), (0, 2), (0, 1), (7, 2), (0, 1), (0, 1), (1, 1), (0, 1), (11, 1), (1, 1), (8, 1)]
+# runSymbols = [(0, 40), (0, 7), (0, -2), (1, 3), (0, 7), (0, 2), (0, 6), (0, -2), (0, 1), (0, 2), (0, 2), (0, -4), (0, 5), (0, 1), (0, 1), (0, 2), (0, 1), (7, 2), (0, 1), (0, 1), (1, 1), (0, 1), (11, 1), (1, 1), (8, 1), (0, 0)]
 # print(iRunLength(runSymbols, 40))
 # qBlock = [[80,  7,  7,  2,  1,  1,  1,  0],
 #           [-2,  3,  6,  5,  2,  1,  1,  1],
