@@ -31,10 +31,9 @@ def JPEGencode(img, subimg, qScale):
     r, g, b = np.array(img.split())
     y, cr, cb = convert2ycrcb(r, g, b, subimg)
     
-    DCpred = 0
-    
     # Luminance block encoding
     for i in range(0, y.shape[0], 8):
+        DCpred = 0
         for j in range(0, y.shape[1], 8):
             # Extract the block
             block = y[i:i+8, j:j+8]
@@ -49,8 +48,8 @@ def JPEGencode(img, subimg, qScale):
             # Store the huffman stream
             blkItem = JPEGblockItem(
                 blkType = "Y",
-                indHor = i,
-                indVer = j,
+                indHor = j,
+                indVer = i,
                 huffStream = huffStream
             )
             # Store the block item
@@ -59,8 +58,8 @@ def JPEGencode(img, subimg, qScale):
             
     # Chrominance block encoding
     ### Cr
-    DCpred = 0
     for i in range(0, cr.shape[0], 8):
+        DCpred = 0
         for j in range(0, cr.shape[1], 8):
             # Extract the block
             block = cr[i:i+8, j:j+8]
@@ -75,8 +74,8 @@ def JPEGencode(img, subimg, qScale):
             # Store the huffman stream
             blkItem = JPEGblockItem(
                 blkType = "Cr",
-                indHor = i,
-                indVer = j,
+                indHor = j,
+                indVer = i,
                 huffStream = huffStream
             )
             # Store the block item
@@ -84,8 +83,8 @@ def JPEGencode(img, subimg, qScale):
             DCpred = runSymbols[0][1]
     
     ### Cb
-    DCpred = 0
     for i in range(0, cb.shape[0], 8):
+        DCpred = 0
         for j in range(0, cb.shape[1], 8):
             # Extract the block
             block = cb[i:i+8, j:j+8]
@@ -100,8 +99,8 @@ def JPEGencode(img, subimg, qScale):
             # Store the huffman stream
             blkItem = JPEGblockItem(
                 blkType = "Cb",
-                indHor = i,
-                indVer = j,
+                indHor = j,
+                indVer = i,
                 huffStream = huffStream
             )
             # Store the block item
@@ -115,7 +114,6 @@ def JPEGdecode(JPEGenc):
     y_JPEGenc = []
     cr_JPEGenc = []
     cb_JPEGenc = []
-
 
     # Split the JPEGenc into Y, Cr, and Cb
     for i in range(1, len(JPEGenc)):
@@ -131,52 +129,53 @@ def JPEGdecode(JPEGenc):
     cb = np.empty((cb_JPEGenc[-1].indHor+8, cb_JPEGenc[-1].indVer+8))
 
     # Luminance block decoding
-    DCpred = 0
-    runSymbols = huffDec(y_JPEGenc[0].huffStream)
-    for i in range(len(y_JPEGenc)):
-        if i > 0:
+    for blk in y_JPEGenc:
+        if blk.indHor == 0:
+            DCpred = 0
+        else:
             DCpred = runSymbols[0][1]
         # Huffman decode the block
-        runSymbols = huffDec(y_JPEGenc[i].huffStream)
+        runSymbols = huffDec(blk.huffStream)
         quant_blk = iRunLength(runSymbols, DCpred)
         # Dequantize the block
         quant_blk = dequantizeJPEG(quant_blk, JPEGenc[0].qTableL, qScale)
         # Inverse DCT
-        block = iBlockDCT(quant_blk)
-        y[y_JPEGenc[i].indHor:y_JPEGenc[i].indHor+8, y_JPEGenc[i].indVer:y_JPEGenc[i].indVer+8] = block
-            
-    # Chrominance block decoding
-    ### Cr
-    DCpred = 0
-    runSymbols = huffDec(cr_JPEGenc[0].huffStream)
-    for i in range(len(cr_JPEGenc)):
-        if i > 0:
-            DCpred = runSymbols[0][1]
-        # Huffman decode the block
-        runSymbols = huffDec(cr_JPEGenc[i].huffStream)
-        quant_blk = iRunLength(runSymbols, DCpred)
-        # Dequantize the block
-        quant_blk = dequantizeJPEG(quant_blk, JPEGenc[0].qTableC, qScale)
-        # Inverse DCT
-        block = iBlockDCT(quant_blk)
-        # Store the reconstructed block
-        cr[cr_JPEGenc[i].indHor:cr_JPEGenc[i].indHor+8, cr_JPEGenc[i].indVer:cr_JPEGenc[i].indVer+8] = block
+        final_block = iBlockDCT(quant_blk)
+        y[blk.indVer:blk.indVer+8, blk.indHor:blk.indHor+8] = final_block
+        # y[blk.indHor:blk.indHor+8, blk.indVer:blk.indVer+8] = final_block
 
-    ### Cb
-    DCpred = 0
-    runSymbols = huffDec(cb_JPEGenc[0].huffStream)
-    for i in range(len(cb_JPEGenc)):
-        if i > 0:
+    # Chrominance block decoding
+    ## Cr
+    for blk in cr_JPEGenc:
+        if blk.indHor == 0:
+            DCpred = 0
+        else:
             DCpred = runSymbols[0][1]
         # Huffman decode the block
-        runSymbols = huffDec(cb_JPEGenc[i].huffStream)
+        runSymbols = huffDec(blk.huffStream)
         quant_blk = iRunLength(runSymbols, DCpred)
         # Dequantize the block
         quant_blk = dequantizeJPEG(quant_blk, JPEGenc[0].qTableC, qScale)
         # Inverse DCT
-        block = iBlockDCT(quant_blk)
-        # Store the reconstructed block
-        cb[cb_JPEGenc[i].indHor:cb_JPEGenc[i].indHor+8, cb_JPEGenc[i].indVer:cb_JPEGenc[i].indVer+8] = block
+        final_block = iBlockDCT(quant_blk)
+        cr[blk.indVer:blk.indVer+8, blk.indHor:blk.indHor+8] = final_block
+        # cr[blk.indHor:blk.indHor+8, blk.indVer:blk.indVer+8] = final_block
+
+    ## Cb
+    for blk in cb_JPEGenc:
+        if blk.indHor == 0:
+            DCpred = 0
+        else:
+            DCpred = runSymbols[0][1]
+        # Huffman decode the block
+        runSymbols = huffDec(blk.huffStream)
+        quant_blk = iRunLength(runSymbols, DCpred)
+        # Dequantize the block
+        quant_blk = dequantizeJPEG(quant_blk, JPEGenc[0].qTableC, qScale)
+        # Inverse DCT
+        final_block = iBlockDCT(quant_blk)
+        cb[blk.indVer:blk.indVer+8, blk.indHor:blk.indHor+8] = final_block
+        # cb[blk.indHor:blk.indHor+8, blk.indVer:blk.indVer+8] = final_block
             
     return mergeRGB(y, cr, cb)
 
@@ -200,12 +199,21 @@ def mergeRGB(y, cr, cb):
 
 
 img = Image.open('images/baboon.png')
-subimg = [4, 2, 2]
-qScale = 1
+subimg = [4, 4, 4]
+qScale = 0.08
 JPEGenc = JPEGencode(img, subimg, qScale)
 img = JPEGdecode(JPEGenc)
 img.show()
 
-# img.save('images/baboon_jpeg.png')
+img.save('images/baboon_jpeg.png')
+
+img = Image.open('images/lena_color_512.png')
+subimg = [4, 4, 4]
+qScale = 0.1
+JPEGenc = JPEGencode(img, subimg, qScale)
+img = JPEGdecode(JPEGenc)
+img.show()
+
+img.save('images/lena_jpeg.png')
 
 

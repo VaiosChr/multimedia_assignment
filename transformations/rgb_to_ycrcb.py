@@ -49,6 +49,11 @@ def convert2rgb(y, cr, cb, subimg):
     g = y - 0.344136 * cb - 0.714136 * cr
     b = y + 1.772 * cb
 
+    # Clip the values to the range [0, 255]
+    r = np.clip(r, 0, 255)
+    g = np.clip(g, 0, 255)
+    b = np.clip(b, 0, 255)
+
     return r.astype('uint8'), g.astype('uint8'), b.astype('uint8')
     
 

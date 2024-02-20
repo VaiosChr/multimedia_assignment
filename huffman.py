@@ -47,6 +47,8 @@ def huffEnc(runSymbols, isLuminance=True):
 
 def encodeDC(DIFF, isLuminance):
   category = findCategory(DIFF)
+  if category == 12:
+    print(DIFF)
   code = dc_luminance[category] if isLuminance else dc_chrominance[category]
   
   # Binary of diff
