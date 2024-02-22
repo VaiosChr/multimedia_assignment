@@ -7,6 +7,7 @@ from PIL import Image
 from tables.huffman_tables import *
 from tables.quantization_tables import *
 
+# JPEGenc first element
 class JPEGfirst:
     def __init__(self):
         self.qTableL = qTableL          # Quantization table for luminance
@@ -17,6 +18,7 @@ class JPEGfirst:
         self.ACC = ac_chrominance       # Elements used to encode the AC coefficients for chrominance block
 
 
+# JPEGenc block item
 class JPEGblockItem:
     def __init__(self, blkType, indHor, indVer, huffStream):
         self.blkType = blkType          # Type of block (Y, Cb, Cr)
@@ -25,6 +27,7 @@ class JPEGblockItem:
         self.huffStream = huffStream    # Huffman stream
         
 
+# JPEG encode the image
 def JPEGencode(img, subimg, qScale):
     JPEGenc = (JPEGfirst(),)
     
@@ -110,6 +113,7 @@ def JPEGencode(img, subimg, qScale):
     return JPEGenc
 
 
+# JPEG decode the image
 def JPEGdecode(JPEGenc):
     y_JPEGenc = []
     cr_JPEGenc = []
@@ -123,10 +127,15 @@ def JPEGdecode(JPEGenc):
             cr_JPEGenc.append(JPEGenc[i])
         elif JPEGenc[i].blkType == "Cb":
             cb_JPEGenc.append(JPEGenc[i])
-    
-    y = np.empty((y_JPEGenc[-1].indHor+8, y_JPEGenc[-1].indVer+8))
-    cr = np.empty((cr_JPEGenc[-1].indHor+8, cr_JPEGenc[-1].indVer+8))
-    cb = np.empty((cb_JPEGenc[-1].indHor+8, cb_JPEGenc[-1].indVer+8))
+
+    # Sort the blocks by their indices
+    y_JPEGenc.sort(key=lambda x: (x.indVer, x.indHor))
+    cr_JPEGenc.sort(key=lambda x: (x.indVer, x.indHor))
+    cb_JPEGenc.sort(key=lambda x: (x.indVer, x.indHor))
+
+    y = np.empty((y_JPEGenc[-1].indVer+8, y_JPEGenc[-1].indHor+8))
+    cr = np.empty((cr_JPEGenc[-1].indVer+8, cr_JPEGenc[-1].indHor+8))
+    cb = np.empty((cb_JPEGenc[-1].indVer+8, cb_JPEGenc[-1].indHor+8))
 
     # Luminance block decoding
     for blk in y_JPEGenc:
@@ -142,7 +151,6 @@ def JPEGdecode(JPEGenc):
         # Inverse DCT
         final_block = iBlockDCT(quant_blk)
         y[blk.indVer:blk.indVer+8, blk.indHor:blk.indHor+8] = final_block
-        # y[blk.indHor:blk.indHor+8, blk.indVer:blk.indVer+8] = final_block
 
     # Chrominance block decoding
     ## Cr
@@ -159,7 +167,6 @@ def JPEGdecode(JPEGenc):
         # Inverse DCT
         final_block = iBlockDCT(quant_blk)
         cr[blk.indVer:blk.indVer+8, blk.indHor:blk.indHor+8] = final_block
-        # cr[blk.indHor:blk.indHor+8, blk.indVer:blk.indVer+8] = final_block
 
     ## Cb
     for blk in cb_JPEGenc:
@@ -175,12 +182,13 @@ def JPEGdecode(JPEGenc):
         # Inverse DCT
         final_block = iBlockDCT(quant_blk)
         cb[blk.indVer:blk.indVer+8, blk.indHor:blk.indHor+8] = final_block
-        # cb[blk.indHor:blk.indHor+8, blk.indVer:blk.indVer+8] = final_block
             
     return mergeRGB(y, cr, cb)
 
+
+# Merge the Y, Cr, and Cb into an image
 def mergeRGB(y, cr, cb):
-    # Calculate sumsampling parameters
+    # Calculate sumsampling matrix
     subimg = [4, 4, 4]
     if y.shape[1]//cr.shape[1] == 2:
         subimg = [4, 2, 2]
@@ -199,21 +207,21 @@ def mergeRGB(y, cr, cb):
 
 
 img = Image.open('images/baboon.png')
-subimg = [4, 4, 4]
+subimg = [4, 2, 0]
 qScale = 0.08
 JPEGenc = JPEGencode(img, subimg, qScale)
 img = JPEGdecode(JPEGenc)
 img.show()
 
-img.save('images/baboon_jpeg.png')
+# img.save('images/baboon_jpeg.png')
 
-img = Image.open('images/lena_color_512.png')
-subimg = [4, 4, 4]
-qScale = 0.1
-JPEGenc = JPEGencode(img, subimg, qScale)
-img = JPEGdecode(JPEGenc)
-img.show()
+# img = Image.open('images/lena_color_512.png')
+# subimg = [4, 4, 4]
+# qScale = 0.1
+# JPEGenc = JPEGencode(img, subimg, qScale)
+# img = JPEGdecode(JPEGenc)
+# img.show()
 
-img.save('images/lena_jpeg.png')
+# img.save('images/lena_jpeg.png')
 
 

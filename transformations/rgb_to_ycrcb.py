@@ -1,6 +1,5 @@
 import numpy as np
 
-
 # Subsampling function: subsamples the cr and cb channels and returns them
 def subsampleCrCb(cr, cb, subimg):
     if subimg[2] == 4:
@@ -43,10 +42,10 @@ def convert2ycrcb(r, g, b, subimg):
 def convert2rgb(y, cr, cb, subimg):
     # Upsample the cr and cb channels
     cr, cb = upsampleCrCb(cr, cb, subimg)
-
+    
     # Perform inverse YCrCb to RGB conversion
     r = y + 1.402 * cr
-    g = y - 0.344136 * cb - 0.714136 * cr
+    g = y - 0.3441 * cb - 0.7141 * cr
     b = y + 1.772 * cb
 
     # Clip the values to the range [0, 255]
@@ -82,3 +81,5 @@ def interpolateRows(array):
         interpolated_array[2 * i + 1, :] = (array[i, :] + array[i + 1, :]) / 2.0
     
     return interpolated_array
+
+

@@ -7,20 +7,39 @@ dc_chrominance_rev = {v: k for k, v in dc_chrominance.items()}
 ac_luminance_rev = {v: k for k, v in ac_luminance.items()}
 ac_chrominance_rev = {v: k for k, v in ac_chrominance.items()}
 
-def negativeNumberToBinary(num):
-  num_binary = bin(abs(num-1))[2:]
-  num_binary = num_binary.replace('0', '2').replace('1', '0').replace('2', '1')
-  # Add 1 to num_binary
-  for i in range(len(num_binary)-1, -1, -1):
-    if num_binary[i] == '0':
-      num_binary = num_binary[:i] + '1' + num_binary[i+1:]
-      break
-    else:
-      num_binary = num_binary[:i] + '0' + num_binary[i+1:]
+# Convert signed number to binary
+def numberToBinary(num):
+  if num < 0:
+    num_binary = bin(abs(num-1))[2:]
+    # Invert bits
+    num_binary = num_binary.replace('0', '2').replace('1', '0').replace('2', '1')
+    # Add 1 to num_binary
+    for i in range(len(num_binary)-1, -1, -1):
+      if num_binary[i] == '0':
+        num_binary = num_binary[:i] + '1' + num_binary[i+1:]
+        break
+      else:
+        num_binary = num_binary[:i] + '0' + num_binary[i+1:]
+  elif num == 0:
+    num_binary = ""
+  else:
+    num_binary = bin(num)[2:]
   
   return num_binary
 
 
+# Convert binary to signed number
+def binaryToNumber(binary):
+  if binary[0] == '0':
+    binary = binary.replace('0', '2').replace('1', '0').replace('2', '1')
+    num = -(int(binary, 2))
+  else:
+    num = int(binary, 2)
+  
+  return num
+
+
+# Find category of a number, according to JPEG standard
 def findCategory(DIFF):
   if DIFF == 0:
     return 0
@@ -28,51 +47,29 @@ def findCategory(DIFF):
   return (int)(math.log2(abs(DIFF))+1)
 
 
-def findBase(category):
-  if category == 0:
-    return 0
-  
-  return (int)(math.pow(2, category-1))
-
-
-def huffEnc(runSymbols, isLuminance=True):
-  diff = runSymbols[0][1]
-  dc_code = encodeDC(diff, isLuminance)
-
-  ac_coefficients = runSymbols[1:]
-  ac_codes = encodeAC(ac_coefficients, isLuminance)
-
-  return dc_code + ac_codes
-
-
+# Encoding functions
+## Encode DC coefficient
 def encodeDC(DIFF, isLuminance):
   category = findCategory(DIFF)
-  if category == 12:
-    print(DIFF)
   code = dc_luminance[category] if isLuminance else dc_chrominance[category]
   
-  # Binary of diff
-  if DIFF < 0:
-    diff_binary = negativeNumberToBinary(DIFF)
-  elif DIFF == 0:
-    diff_binary = ""
-  else:
-    diff_binary = bin(DIFF)[2:]
+  diff_binary = numberToBinary(DIFF)
 
   return code + diff_binary[len(diff_binary)-category:]
 
 
+## Encode AC coefficients
 def encodeAC(coefficients, isLuminance):
   ac_codes = ""
 
   for coef in coefficients:
     category = findCategory(coef[1])
+    if category == 0:
+      ac_codes += ac_luminance[(0, 0)] if isLuminance else ac_chrominance[(0, 0)]
+      continue
     ac_code = ac_luminance[(coef[0], category)] if isLuminance else ac_chrominance[(coef[0], category)]
 
-    if coef[1] < 0:
-      coef_binary = negativeNumberToBinary(coef[1])
-    else:
-      coef_binary = bin(abs(coef[1]))[2:]
+    coef_binary = numberToBinary(coef[1])
     ac_codes += ac_code + coef_binary[len(coef_binary)-category:]
 
   # Add end-of-block marker
@@ -81,6 +78,8 @@ def encodeAC(coefficients, isLuminance):
   return ac_codes
 
 
+# Decoding functions
+## Decode DC coefficient
 def decodeDC(huffStream, isLuminance):
   endIndex = 1
   
@@ -94,14 +93,12 @@ def decodeDC(huffStream, isLuminance):
       continue
     
     bitStream = huffStream[endIndex:endIndex+category]
-    if bitStream[0] == '0':
-      bitStream = bitStream.replace('0', '2').replace('1', '0').replace('2', '1')
-      diff = -(int(bitStream, 2))
-    else:
-      diff = int(bitStream, 2)
+    diff = binaryToNumber(bitStream)
+
     return diff, endIndex + category
   
 
+## Decode AC coefficients
 def decodeAC(huffStream, index, isLuminance):
   endIndex = index + 1
   symbols = []
@@ -124,12 +121,7 @@ def decodeAC(huffStream, index, isLuminance):
         continue
 
     bitStream = huffStream[endIndex:endIndex+category]
-    
-    if bitStream[0] == '0':
-      bitStream = bitStream.replace('0', '2').replace('1', '0').replace('2', '1')
-      coef = -int(bitStream, 2)
-    else:
-      coef = int(bitStream, 2)
+    coef = binaryToNumber(bitStream)
     
     symbols.append((run, coef))
     endIndex += category + 1
@@ -138,6 +130,16 @@ def decodeAC(huffStream, index, isLuminance):
   return symbols 
 
 
+# Main functions
+## Huffman encoding of the run-length symbols
+def huffEnc(runSymbols, isLuminance=True):
+  dc_code = encodeDC(runSymbols[0][1], isLuminance)
+  ac_codes = encodeAC(runSymbols[1:], isLuminance)
+
+  return dc_code + ac_codes
+
+
+## Huffman decoding of the huffman stream
 def huffDec(huffStream, isLuminance=True):
   diff, index = decodeDC(huffStream, isLuminance)
   symbols = decodeAC(huffStream, index, isLuminance)

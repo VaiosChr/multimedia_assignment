@@ -1,11 +1,11 @@
 import numpy as np
 from scipy.fftpack import dct, idct
 
+# Returns the DCT of a block
 def blockDCT(block):
-    return dct(dct(block.T, norm='ortho').T, norm='ortho')
+    return dct(dct(block, axis=0, norm='ortho'), axis=1, norm='ortho')
 
+
+# Returns the inverse DCT of a block
 def iBlockDCT(block):
-    return idct(idct(block.T, norm='ortho').T, norm='ortho')
-
-# Generate a random 8x8 integer matrix with values in [0, 255]
-random_matrix = np.random.randint(0, 256, size=(8, 8))
+    return idct(idct(block, axis=0, norm='ortho'), axis=1, norm='ortho')
