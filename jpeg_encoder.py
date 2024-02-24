@@ -9,9 +9,10 @@ from tables.quantization_tables import *
 
 # JPEGenc first element
 class JPEGfirst:
-    def __init__(self):
+    def __init__(self, qScale):
         self.qTableL = qTableL          # Quantization table for luminance
         self.qTableC = qTableC          # Quantization table for chrominance
+        self.qScale = qScale            # Quantization scale
         self.DCL = dc_luminance         # Elements used to encode the DC coefficients for luminance block
         self.DCC = dc_chrominance       # Elements used to encode the DC coefficients for chrominance block
         self.ACL = ac_luminance         # Elements used to encode the AC coefficients for luminance block
@@ -29,7 +30,7 @@ class JPEGblockItem:
 
 # JPEG encode the image
 def JPEGencode(img, subimg, qScale):
-    JPEGenc = (JPEGfirst(),)
+    JPEGenc = (JPEGfirst(qScale),)
     
     r, g, b = np.array(img.split())
     y, cr, cb = convert2ycrcb(r, g, b, subimg)
@@ -115,6 +116,8 @@ def JPEGencode(img, subimg, qScale):
 
 # JPEG decode the image
 def JPEGdecode(JPEGenc):
+    params = JPEGenc[0]
+
     y_JPEGenc = []
     cr_JPEGenc = []
     cb_JPEGenc = []
@@ -147,7 +150,7 @@ def JPEGdecode(JPEGenc):
         runSymbols = huffDec(blk.huffStream)
         quant_blk = iRunLength(runSymbols, DCpred)
         # Dequantize the block
-        quant_blk = dequantizeJPEG(quant_blk, JPEGenc[0].qTableL, qScale)
+        quant_blk = dequantizeJPEG(quant_blk, params.qTableL, params.qScale)
         # Inverse DCT
         final_block = iBlockDCT(quant_blk)
         y[blk.indVer:blk.indVer+8, blk.indHor:blk.indHor+8] = final_block
@@ -163,7 +166,7 @@ def JPEGdecode(JPEGenc):
         runSymbols = huffDec(blk.huffStream)
         quant_blk = iRunLength(runSymbols, DCpred)
         # Dequantize the block
-        quant_blk = dequantizeJPEG(quant_blk, JPEGenc[0].qTableC, qScale)
+        quant_blk = dequantizeJPEG(quant_blk, params.qTableC, params.qScale)
         # Inverse DCT
         final_block = iBlockDCT(quant_blk)
         cr[blk.indVer:blk.indVer+8, blk.indHor:blk.indHor+8] = final_block
@@ -178,7 +181,7 @@ def JPEGdecode(JPEGenc):
         runSymbols = huffDec(blk.huffStream)
         quant_blk = iRunLength(runSymbols, DCpred)
         # Dequantize the block
-        quant_blk = dequantizeJPEG(quant_blk, JPEGenc[0].qTableC, qScale)
+        quant_blk = dequantizeJPEG(quant_blk, params.qTableC, params.qScale)
         # Inverse DCT
         final_block = iBlockDCT(quant_blk)
         cb[blk.indVer:blk.indVer+8, blk.indHor:blk.indHor+8] = final_block
@@ -206,12 +209,12 @@ def mergeRGB(y, cr, cb):
     return Image.merge("RGB", (r_img, g_img, b_img))
 
 
-img = Image.open('images/baboon.png')
-subimg = [4, 2, 0]
-qScale = 0.08
-JPEGenc = JPEGencode(img, subimg, qScale)
-img = JPEGdecode(JPEGenc)
-img.show()
+# img = Image.open('images/baboon.png')
+# subimg = [4, 2, 0]
+# qScale = 0.08
+# JPEGenc = JPEGencode(img, subimg, qScale)
+# img = JPEGdecode(JPEGenc)
+# img.show()
 
 # img.save('images/baboon_jpeg.png')
 

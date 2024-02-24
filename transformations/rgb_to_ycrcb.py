@@ -45,7 +45,7 @@ def convert2rgb(y, cr, cb, subimg):
     
     # Perform inverse YCrCb to RGB conversion
     r = y + 1.402 * cr
-    g = y - 0.3441 * cb - 0.7141 * cr
+    g = y - 0.7141 * cr - 0.3441 * cb
     b = y + 1.772 * cb
 
     # Clip the values to the range [0, 255]
