@@ -7,7 +7,7 @@ from tables.quantization_tables import qTableL, qTableC
 
 ######### QUESTION 1 #########
 
-# Read image
+# Read images
 img1 = Image.open("images/baboon.png")
 r1, g1, b1 = np.array(img1.split())
 img2 = Image.open("images/lena_color_512.png")
@@ -47,7 +47,7 @@ new_image2.save("images/lena1.png")
 
 ######### QUESTION 2 #########
 
-# Read image
+# Read images
 img1 = Image.open("images/baboon.png")
 r1, g1, b1 = np.array(img1.split())
 img2 = Image.open("images/lena_color_512.png")

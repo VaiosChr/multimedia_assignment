@@ -2,13 +2,17 @@ from jpeg_encoder import *
 import matplotlib.pyplot as plt
 
 # Load image
-img = Image.open("images/lena_color_512.png")
-qSacle = [0.1, 0.3, 0.6, 1, 2, 5]
+img = Image.open("images/baboon.png")
+zero = [20, 40, 50, 60, 63]
+qScale = 1
 
-for q in qSacle:
-    encodedJPEG = JPEGencode(img, [4, 2, 2], q)
-    imgRec = JPEGdecode(encodedJPEG)
+# Encode and decode the image
+JPEGenc = JPEGencode(img, zero, qScale)
+imgRec = JPEGdecode(JPEGenc)
 
-    imgRec.save("images/qSacle/lena_q_" + str(q) + ".png")
+# Save the images
+imgRec.save("images/qTable/baboon_20.png")
+
+  
 
 
