@@ -1,8 +1,8 @@
 from huffman import huffEnc, huffDec
-from transformations.quantization import quantizeJPEG, dequantizeJPEG
-from transformations.dct import blockDCT, iBlockDCT
-from transformations.zig_zag import runLength, iRunLength
-from transformations.rgb_to_ycrcb import convert2ycrcb, convert2rgb
+from quantization import quantizeJPEG, dequantizeJPEG
+from dct import blockDCT, iBlockDCT
+from zig_zag import runLength, iRunLength
+from rgb_to_ycrcb import convert2ycrcb, convert2rgb
 from PIL import Image
 from tables.huffman_tables import *
 from tables.quantization_tables import *

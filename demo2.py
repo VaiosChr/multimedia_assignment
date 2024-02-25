@@ -26,6 +26,20 @@ def calculate_entropy(dct_coefficients):
     return entropy
 
 
+def calculate_entropy_rle(rle_coefficients):
+    # Flatten the run-length encoded coefficients
+    flattened_coefficients = [item for sublist in rle_coefficients for item in sublist]
+    
+    # Calculate probability distribution
+    total_coefficients = len(flattened_coefficients)
+    probabilities = [count / total_coefficients for count in Counter(flattened_coefficients).values()]
+    
+    # Compute entropy
+    entropy = -np.sum([p * np.log2(p) for p in probabilities if p > 0])
+    
+    return entropy
+
+
 # Baboon image
 img1 = Image.open("images/baboon.png")
 subimg1 = [4, 2, 2]
@@ -40,21 +54,23 @@ qScale2 = 5
 jpeg2_enc = JPEGencode(img2, subimg2, qScale2)
 img2_rec = JPEGdecode(jpeg2_enc)
 
+
 ######### QUESTION 1 #########
 
 # # Calculate the entropy
-# entropy1 = entropy(np.array(img1))
-# entropy2 = entropy(np.array(img2))
+entropy1 = entropy(np.array(img1))
+entropy2 = entropy(np.array(img2))
 
-# # Calculate the entropy of the reconstructed images
-# entropy1_rec = entropy(np.array(img1_rec))
-# entropy2_rec = entropy(np.array(img2_rec))
+# Calculate the entropy of the reconstructed images
+entropy1_rec = entropy(np.array(img1_rec))
+entropy2_rec = entropy(np.array(img2_rec))
 
-# # Print the results
-# print("Entropy of the original baboon image: ", entropy1)
-# print("Entropy of the reconstructed baboon image: ", entropy1_rec)
-# print("Entropy of the original lena image: ", entropy2)
-# print("Entropy of the reconstructed lena image: ", entropy2_rec)
+# Print the results
+print("Entropy of the original baboon image: ", entropy1)
+print("Entropy of the reconstructed baboon image: ", entropy1_rec)
+print("Entropy of the original lena image: ", entropy2)
+print("Entropy of the reconstructed lena image: ", entropy2_rec)
+
 
 ######### QUESTION 2 #########
 
@@ -134,3 +150,55 @@ print("Cb: ", entropy_cb2_q_dct)
 
 ######### QUESTION 3 #########
 
+y1_rle = []
+cr1_rle = []
+cb1_rle = []
+
+y2_rle = []
+cr2_rle = []
+cb2_rle = []
+
+for i in range(0, y1.shape[0], 8):
+    DCpred1 = 0
+    DCpred2 = 0
+    for j in range(0, y1.shape[1], 8):
+        y1_rle.append(runLength(y1_q_dct[i:i+8, j:j+8], DCpred1))
+        y2_rle.append(runLength(y2_q_dct[i:i+8, j:j+8], DCpred2))
+
+        DCpred1 = y1_rle[-1][0][1]
+        DCpred2 = y2_rle[-1][0][1]
+
+for i in range(0, cr1.shape[0], 8):
+    DCpred1 = 0
+    for j in range(0, cr1.shape[1], 8):
+        cr1_rle.append(runLength(cr1_q_dct[i:i+8, j:j+8], DCpred1))
+        cb1_rle.append(runLength(cb1_q_dct[i:i+8, j:j+8], DCpred1))
+
+        DCpred1 = cr1_rle[-1][0][1]
+
+for i in range(0, cr2.shape[0], 8):
+    DCpred2 = 0
+    for j in range(0, cr2.shape[1], 8):
+        cr2_rle.append(runLength(cr2_q_dct[i:i+8, j:j+8], DCpred2))
+        cb2_rle.append(runLength(cb2_q_dct[i:i+8, j:j+8], DCpred2))
+
+        DCpred2 = cr2_rle[-1][0][1]
+
+# Calculate the entropy of the run-length encoded coefficients
+entropy_y1_rle = calculate_entropy_rle(y1_rle)
+entropy_cr1_rle = calculate_entropy_rle(cr1_rle)
+entropy_cb1_rle = calculate_entropy_rle(cb1_rle)
+
+entropy_y2_rle = calculate_entropy_rle(y2_rle)
+entropy_cr2_rle = calculate_entropy_rle(cr2_rle)
+entropy_cb2_rle = calculate_entropy_rle(cb2_rle)
+
+# Print the results
+print("Entropy of the run-length encoded coefficients for the baboon image: ")
+print("Y: ", entropy_y1_rle)
+print("Cr: ", entropy_cr1_rle)
+print("Cb: ", entropy_cb1_rle)
+print("Entropy of the run-length encoded coefficients for the lena image: ")
+print("Y: ", entropy_y2_rle)
+print("Cr: ", entropy_cr2_rle)
+print("Cb: ", entropy_cb2_rle)

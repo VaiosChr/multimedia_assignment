@@ -11,7 +11,7 @@ JPEGenc = JPEGencode(img, zero, qScale)
 imgRec = JPEGdecode(JPEGenc)
 
 # Save the images
-imgRec.save("images/qTable/baboon_20.png")
+# imgRec.save("images/qTable/baboon_20.png")
 
   
 
